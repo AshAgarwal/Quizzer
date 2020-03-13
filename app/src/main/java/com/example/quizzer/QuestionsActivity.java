@@ -1,5 +1,6 @@
 package com.example.quizzer;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
@@ -8,13 +9,20 @@ import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +38,11 @@ public class QuestionsActivity extends AppCompatActivity {
     private List<QuestionModelClass> list;
     private int score = 0;
 
+    private String category;
+    private int setsNo;
+
+    private DatabaseReference databaseReference;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,39 +57,60 @@ public class QuestionsActivity extends AppCompatActivity {
         btnShare = (Button) findViewById(R.id.btnShare);
         btnNext = (Button) findViewById(R.id.btnNext);
 
+        category = getIntent().getStringExtra("category");
+        setsNo = getIntent().getIntExtra("setNo", 1);
+
         list = new ArrayList<>();
-        list.add(new QuestionModelClass("Question 1", "a", "b", "c", "d", "a"));
-        list.add(new QuestionModelClass("Question 2", "a", "b", "c", "d", "a"));
-        list.add(new QuestionModelClass("Question 3", "a", "b", "c", "d", "a"));
-        list.add(new QuestionModelClass("Question 4", "a", "b", "c", "d", "a"));
-        list.add(new QuestionModelClass("Question 5", "a", "b", "c", "d", "c"));
+        databaseReference = FirebaseDatabase.getInstance().getReference();
 
-        for (int i = 0; i < 4; i++){
+        databaseReference.child("Sets").child(category).child("Questions")
+                .orderByChild("setNo").equalTo(setsNo)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()){
+                            list.add(snapshot.getValue(QuestionModelClass.class));
+                        }
 
-            optionContainer.getChildAt(i).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    checkAnswer((Button)v);
-                }
-            });
-        }
+                        if (list.size() > 0){
+                            for (int i = 0; i < 4; i++){
+                                optionContainer.getChildAt(i).setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                        checkAnswer((Button)v);
+                                    }
+                                });
+                            }
 
-        playAnim(txtQuestion, 0, list.get(position).getQuestion());
-        btnNext.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                btnNext.setEnabled(false);
-                btnNext.setAlpha(0.7f);
-                enableOption(true);
-                position++;
-                if (position == list.size()){
-                    // startActivity
-                    return;
-                }
-                count = 0;
-                playAnim(txtQuestion, 0, list.get(position).getQuestion());
-            }
-        });
+                            playAnim(txtQuestion, 0, list.get(position).getQuestion());
+
+                            btnNext.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    btnNext.setEnabled(false);
+                                    btnNext.setAlpha(0.7f);
+                                    enableOption(true);
+                                    position++;
+                                    if (position == list.size()){
+                                        // startActivity
+                                        return;
+                                    }
+                                    count = 0;
+                                    playAnim(txtQuestion, 0, list.get(position).getQuestion());
+                                }
+                            });
+
+                        } else {
+                            finish();
+                            Toast.makeText(QuestionsActivity.this, "No Question Available", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+                        Log.e("QUESTION ACT CANCELLED:", databaseError.getMessage() );
+                    }
+                });
     }
 
     private void playAnim(final View view, final int value, final String data){

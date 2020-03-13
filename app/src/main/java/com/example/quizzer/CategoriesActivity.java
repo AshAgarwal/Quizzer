@@ -7,7 +7,14 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,12 +22,18 @@ import java.util.List;
 public class CategoriesActivity extends AppCompatActivity {
 
     private RecyclerView categoriesListRv;
+    private FirebaseDatabase database;
+    private DatabaseReference databaseReference;
+    private List<CategoryModel> list;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_categories);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.categoriesToolbar);
+        database = FirebaseDatabase.getInstance();
+        databaseReference = database.getReference();
 
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle("Categories");
@@ -32,17 +45,26 @@ public class CategoriesActivity extends AppCompatActivity {
         layoutManager.setOrientation(RecyclerView.VERTICAL);
         categoriesListRv.setLayoutManager(layoutManager);
 
-        List<CategoryModel> list = new ArrayList<>();
-        list.add(new CategoryModel("", "Category 1"));
-        list.add(new CategoryModel("", "Category 2"));
-        list.add(new CategoryModel("", "Category 3"));
-        list.add(new CategoryModel("", "Category 4"));
-        list.add(new CategoryModel("", "Category 5"));
-        list.add(new CategoryModel("", "Category 6"));
-        list.add(new CategoryModel("", "Category 7"));
+        list = new ArrayList<>();
 
-        CategoryAdapter adapter = new CategoryAdapter(list);
+        final CategoryAdapter adapter = new CategoryAdapter(list);
         categoriesListRv.setAdapter(adapter);
+
+        databaseReference.child("Categories").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()){
+                    list.add(snapshot.getValue(CategoryModel.class));
+                }
+
+                adapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.e("ON CANCELLED", databaseError.getMessage());
+            }
+        });
     }
 
     @Override

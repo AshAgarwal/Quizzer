@@ -1,27 +1,39 @@
 package com.example.quizzer;
 
 public class CategoryModel {
-    private String imageUrl;
-    private String title;
+    private int Sets;
+    private String Url;
+    private String Name;
 
-    public CategoryModel(String imageUrl, String title) {
-        this.imageUrl = imageUrl;
-        this.title = title;
+    public CategoryModel(){}        // Default Constructor for Firebase
+
+    public CategoryModel(int sets, String url, String name) {
+        Sets = sets;
+        Url = url;
+        Name = name;
     }
 
-    public String getImageUrl() {
-        return imageUrl;
+    public int getSets() {
+        return Sets;
     }
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+    public void setSets(int sets) {
+        Sets = sets;
     }
 
-    public String getTitle() {
-        return title;
+    public String getUrl() {
+        return Url;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public void setUrl(String url) {
+        Url = url;
+    }
+
+    public String getName() {
+        return Name;
+    }
+
+    public void setName(String name) {
+        Name = name;
     }
 }

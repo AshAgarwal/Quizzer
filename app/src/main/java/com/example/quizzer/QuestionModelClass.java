@@ -7,14 +7,18 @@ public class QuestionModelClass {
     private String optionC;
     private String optionD;
     private String correntAns;
+    private int setNo;
 
-    public QuestionModelClass(String question, String optionA, String optionB, String optionC, String optionD, String correntAns) {
+    public QuestionModelClass(){}
+
+    public QuestionModelClass(String question, String optionA, String optionB, String optionC, String optionD, String correntAns, int setNo) {
         this.question = question;
         this.optionA = optionA;
         this.optionB = optionB;
         this.optionC = optionC;
         this.optionD = optionD;
         this.correntAns = correntAns;
+        this.setNo = setNo;
     }
 
     public String getQuestion() {
@@ -63,5 +67,13 @@ public class QuestionModelClass {
 
     public void setCorrentAns(String correntAns) {
         this.correntAns = correntAns;
+    }
+
+    public int getSetNo() {
+        return setNo;
+    }
+
+    public void setSetNo(int setNo) {
+        this.setNo = setNo;
     }
 }
