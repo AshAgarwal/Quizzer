@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.animation.Animator;
+import android.app.Dialog;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
@@ -41,6 +42,8 @@ public class QuestionsActivity extends AppCompatActivity {
     private String category;
     private int setsNo;
 
+    private Dialog loadingDialog;
+
     private DatabaseReference databaseReference;
 
     @Override
@@ -49,6 +52,12 @@ public class QuestionsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_questions);
         Toolbar toolbar = (Toolbar) findViewById(R.id.questionToolbar);
         setSupportActionBar(toolbar);
+
+        loadingDialog = new Dialog(this);
+        loadingDialog.setContentView(R.layout.loading_dialogue);
+        loadingDialog.getWindow().setBackgroundDrawable(getDrawable(R.drawable.rounded_corners));
+        loadingDialog.getWindow().setLayout(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        loadingDialog.setCancelable(false);
 
         txtQuestion = (TextView) findViewById(R.id.txtQuestion);
         txtScore = (TextView) findViewById(R.id.txtScore);
@@ -63,6 +72,7 @@ public class QuestionsActivity extends AppCompatActivity {
         list = new ArrayList<>();
         databaseReference = FirebaseDatabase.getInstance().getReference();
 
+        loadingDialog.show();
         databaseReference.child("Sets").child(category).child("Questions")
                 .orderByChild("setNo").equalTo(setsNo)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
@@ -92,7 +102,12 @@ public class QuestionsActivity extends AppCompatActivity {
                                     enableOption(true);
                                     position++;
                                     if (position == list.size()){
-                                        // startActivity
+                                        // scoreActivity
+                                        Intent scoreIntent = new Intent(QuestionsActivity.this, ScoreActivity.class);
+                                        scoreIntent.putExtra("Score", score);
+                                        scoreIntent.putExtra("total", list.size());
+                                        startActivity(scoreIntent);
+                                        finish();
                                         return;
                                     }
                                     count = 0;
@@ -104,11 +119,15 @@ public class QuestionsActivity extends AppCompatActivity {
                             finish();
                             Toast.makeText(QuestionsActivity.this, "No Question Available", Toast.LENGTH_SHORT).show();
                         }
+
+                        loadingDialog.dismiss();
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError databaseError) {
                         Log.e("QUESTION ACT CANCELLED:", databaseError.getMessage() );
+                        loadingDialog.dismiss();
+                        finish();
                     }
                 });
     }

@@ -6,9 +6,11 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.app.Dialog;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
+import android.widget.LinearLayout;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -26,6 +28,8 @@ public class CategoriesActivity extends AppCompatActivity {
     private DatabaseReference databaseReference;
     private List<CategoryModel> list;
 
+    private Dialog loadingDialog;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -34,10 +38,15 @@ public class CategoriesActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.categoriesToolbar);
         database = FirebaseDatabase.getInstance();
         databaseReference = database.getReference();
-
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle("Categories");
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        loadingDialog = new Dialog(this);
+        loadingDialog.setContentView(R.layout.loading_dialogue);
+        loadingDialog.getWindow().setBackgroundDrawable(getDrawable(R.drawable.rounded_corners));
+        loadingDialog.getWindow().setLayout(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        loadingDialog.setCancelable(false);
 
         categoriesListRv = (RecyclerView) findViewById(R.id.categoriesRV);
 
@@ -50,6 +59,7 @@ public class CategoriesActivity extends AppCompatActivity {
         final CategoryAdapter adapter = new CategoryAdapter(list);
         categoriesListRv.setAdapter(adapter);
 
+        loadingDialog.show();
         databaseReference.child("Categories").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -58,11 +68,14 @@ public class CategoriesActivity extends AppCompatActivity {
                 }
 
                 adapter.notifyDataSetChanged();
+                loadingDialog.dismiss();
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
                 Log.e("ON CANCELLED", databaseError.getMessage());
+                loadingDialog.dismiss();
+                finish();
             }
         });
     }
