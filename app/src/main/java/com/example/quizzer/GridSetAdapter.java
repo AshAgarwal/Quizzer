@@ -1,5 +1,6 @@
 package com.example.quizzer;
 
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,7 +31,7 @@ public class GridSetAdapter extends BaseAdapter {
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(int position, View convertView, final ViewGroup parent) {
         View view;
 
         if (convertView == null){
@@ -38,6 +39,14 @@ public class GridSetAdapter extends BaseAdapter {
         } else {
             view = convertView;
         }
+
+        view.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent questionIntent = new Intent(parent.getContext(), QuestionsActivity.class);
+                parent.getContext().startActivity(questionIntent);
+            }
+        });
 
         ((TextView) view.findViewById(R.id.textSetNum)).setText(String.valueOf(position + 1));
 
