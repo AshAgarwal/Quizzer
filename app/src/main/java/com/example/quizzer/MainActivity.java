@@ -7,10 +7,16 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
+
 public class MainActivity extends AppCompatActivity {
 
     private Button btnStartQuiz;
     private Button btnBookmark;
+
+    private AdView mAdView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -18,6 +24,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         btnStartQuiz = (Button) findViewById(R.id.btnStartQuiz);
         btnBookmark = (Button) findViewById(R.id.btnBookMarks);
+
+        MobileAds.initialize(this);
+        loadAds();
 
         btnStartQuiz.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -34,5 +43,11 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(bookmarkIntent);
             }
         });
+    }
+
+    private void loadAds(){
+        mAdView = findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest);
     }
 }

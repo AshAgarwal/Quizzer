@@ -149,6 +149,21 @@ public class QuestionsActivity extends AppCompatActivity {
                                 }
                             });
 
+                            btnShare.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    String body = list.get(position).getQuestion() + "\n"
+                                            + "a)" + list.get(position).getOptionA() + "\n"
+                                            + "b)" + list.get(position).getOptionB() + "\n"
+                                            + "c)" + list.get(position).getOptionC() + "\n"
+                                            + "d)" + list.get(position).getOptionD();
+                                    Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                                    shareIntent.setType("text/plain");
+                                    shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Quizzer Challenege");
+                                    shareIntent.putExtra(Intent.EXTRA_TEXT, body);
+                                    startActivity(Intent.createChooser(shareIntent, "Share Via"));
+                                }
+                            });
                         } else {
                             finish();
                             Toast.makeText(QuestionsActivity.this, "No Question Available", Toast.LENGTH_SHORT).show();
