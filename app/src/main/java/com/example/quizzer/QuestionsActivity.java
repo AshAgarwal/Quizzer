@@ -6,7 +6,9 @@ import androidx.appcompat.widget.Toolbar;
 
 import android.animation.Animator;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -24,11 +26,17 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
 public class QuestionsActivity extends AppCompatActivity {
+
+    private static final String FILE_NAME = "QUIZZER";
+    private static final String KEY_NAME = "QUESTIONS";
 
     private TextView txtQuestion, txtScore;
     private FloatingActionButton fltBookMark;
@@ -45,6 +53,13 @@ public class QuestionsActivity extends AppCompatActivity {
     private Dialog loadingDialog;
 
     private DatabaseReference databaseReference;
+
+    List<QuestionModelClass> bookMarkList;
+    private SharedPreferences preferences;
+    private SharedPreferences.Editor editor;
+    private Gson gson;
+
+    private int matchedQuestionPosition;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +80,25 @@ public class QuestionsActivity extends AppCompatActivity {
         optionContainer = (LinearLayout) findViewById(R.id.optionsLayout);
         btnShare = (Button) findViewById(R.id.btnShare);
         btnNext = (Button) findViewById(R.id.btnNext);
+
+        preferences = getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE);
+        editor = preferences.edit();
+        gson = new Gson();
+
+        getBookmarks();
+
+        fltBookMark.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (modelMatch()){
+                    bookMarkList.remove(matchedQuestionPosition);
+                    fltBookMark.setImageDrawable(getDrawable(R.drawable.bookmark_icon));
+                } else {
+                    bookMarkList.add(list.get(position));
+                    fltBookMark.setImageDrawable(getDrawable(R.drawable.bookmarked));
+                }
+            }
+        });
 
         category = getIntent().getStringExtra("category");
         setsNo = getIntent().getIntExtra("setNo", 1);
@@ -132,6 +166,12 @@ public class QuestionsActivity extends AppCompatActivity {
                 });
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        storeBookmarks();
+    }
+
     private void playAnim(final View view, final int value, final String data){
         view.animate().alpha(value).scaleX(value).scaleY(value).setDuration(500).setStartDelay(100).setInterpolator(new DecelerateInterpolator()).setListener(new Animator.AnimatorListener() {
             @Override
@@ -159,6 +199,13 @@ public class QuestionsActivity extends AppCompatActivity {
                     try{
                         ((TextView)view).setText(data);
                         txtScore.setText(position + 1 + "/" + list.size());
+
+                        if (modelMatch()){
+                            fltBookMark.setImageDrawable(getDrawable(R.drawable.bookmarked));
+                        } else {
+                            fltBookMark.setImageDrawable(getDrawable(R.drawable.bookmark_icon));
+                        }
+
                     } catch (ClassCastException ex){
                         ((Button)view).setText(data);
                     }
@@ -207,5 +254,38 @@ public class QuestionsActivity extends AppCompatActivity {
                 optionContainer.getChildAt(i).setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#989898")));
             }
         }
+    }
+
+    private void getBookmarks(){
+        String json = preferences.getString(KEY_NAME, "");
+        Type type = new TypeToken<List<QuestionModelClass>>(){}.getType();
+
+        bookMarkList = gson.fromJson(json, type);
+
+        if (bookMarkList == null){
+            bookMarkList = new ArrayList<>();
+        }
+    }
+
+    private boolean modelMatch(){
+        boolean matched = false;
+        int i = 0;
+        for (QuestionModelClass modelClass : bookMarkList){
+            if (modelClass.getQuestion().equals(list.get(position).getQuestion()) &&
+                modelClass.getCorrentAns().equals(list.get(position).getCorrentAns()) &&
+                modelClass.getSetNo() == list.get(position).getSetNo()){
+                matched = true;
+                matchedQuestionPosition = i;
+            }
+            i++;
+        }
+
+        return matched;
+    }
+
+    private void storeBookmarks(){
+        String json = gson.toJson(bookMarkList);
+        editor.putString(KEY_NAME, json);
+        editor.commit();
     }
 }

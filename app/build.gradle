@@ -32,4 +32,5 @@ dependencies {
     annotationProcessor 'com.github.bumptech.glide:compiler:4.11.0'
     implementation 'com.google.android.material:material:1.0.0'
     implementation 'com.google.firebase:firebase-database:19.2.1'
+    implementation 'com.google.code.gson:gson:2.8.6'
 }
