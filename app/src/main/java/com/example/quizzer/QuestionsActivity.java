@@ -143,25 +143,7 @@ public class QuestionsActivity extends AppCompatActivity {
                             btnNext.setOnClickListener(new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
-                                    Log.e("onClick: ", "resetTimer");
-                                    resetTimer();
-                                    btnNext.setEnabled(false);
-                                    btnNext.setAlpha(0.7f);
-                                    enableOption(true);
-                                    position++;
-                                    if (position == list.size()){
-                                        // scoreActivity
-                                        Intent scoreIntent = new Intent(QuestionsActivity.this, ScoreActivity.class);
-                                        scoreIntent.putExtra("Score", score);
-                                        scoreIntent.putExtra("total", list.size());
-                                        startActivity(scoreIntent);
-                                        finish();
-                                        return;
-                                    }
-                                    count = 0;
-                                    playAnim(txtQuestion, 0, list.get(position).getQuestion());
-                                    Log.e("onAnimationEnd: ", "start Timer");
-                                    startTimer();
+                                    moveToNext();
                                 }
                             });
 
@@ -196,6 +178,28 @@ public class QuestionsActivity extends AppCompatActivity {
                 });
     }
 
+    private void moveToNext(){
+        Log.e("onClick: ", "resetTimer");
+        resetTimer();
+        btnNext.setEnabled(false);
+        btnNext.setAlpha(0.7f);
+        enableOption(true);
+        position++;
+        if (position == list.size()){
+            // scoreActivity
+            Intent scoreIntent = new Intent(QuestionsActivity.this, ScoreActivity.class);
+            scoreIntent.putExtra("Score", score);
+            scoreIntent.putExtra("total", list.size());
+            startActivity(scoreIntent);
+            finish();
+            return;
+        }
+        count = 0;
+        playAnim(txtQuestion, 0, list.get(position).getQuestion());
+        Log.e("onAnimationEnd: ", "start Timer");
+        startTimer();
+    }
+
     private void resetTimer(){
         timer.cancel();
         mTimeLeftInMillis = START_TIME_IN_MILLIS;
@@ -215,6 +219,7 @@ public class QuestionsActivity extends AppCompatActivity {
             public void onFinish() {
                 isTimeRunning = false;
                 // Change the Question
+                moveToNext();
             }
         }.start();
 
