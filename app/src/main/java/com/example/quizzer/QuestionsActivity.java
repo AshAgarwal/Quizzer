@@ -12,6 +12,7 @@ import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.util.Log;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
@@ -32,13 +33,15 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class QuestionsActivity extends AppCompatActivity {
 
+    private static final long START_TIME_IN_MILLIS = 35000;
     private static final String FILE_NAME = "QUIZZER";
     private static final String KEY_NAME = "QUESTIONS";
 
-    private TextView txtQuestion, txtScore;
+    private TextView countDownText, txtQuestion, txtScore;
     private FloatingActionButton fltBookMark;
     private LinearLayout optionContainer;
     private Button btnShare, btnNext;
@@ -61,6 +64,12 @@ public class QuestionsActivity extends AppCompatActivity {
 
     private int matchedQuestionPosition;
 
+    private boolean isTimeRunning = false;
+    private long mTimeLeftInMillis = START_TIME_IN_MILLIS;
+    private long mEndTime;
+
+    private CountDownTimer timer;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -74,6 +83,7 @@ public class QuestionsActivity extends AppCompatActivity {
         loadingDialog.getWindow().setLayout(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         loadingDialog.setCancelable(false);
 
+        countDownText = (TextView) findViewById(R.id.countDownText);
         txtQuestion = (TextView) findViewById(R.id.txtQuestion);
         txtScore = (TextView) findViewById(R.id.txtScore);
         fltBookMark = (FloatingActionButton) findViewById(R.id.fltBookmark);
@@ -127,10 +137,14 @@ public class QuestionsActivity extends AppCompatActivity {
                             }
 
                             playAnim(txtQuestion, 0, list.get(position).getQuestion());
+                            Log.e("onAnimationEnd: ", "start Timer");
+                            startTimer();
 
                             btnNext.setOnClickListener(new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
+                                    Log.e("onClick: ", "resetTimer");
+                                    resetTimer();
                                     btnNext.setEnabled(false);
                                     btnNext.setAlpha(0.7f);
                                     enableOption(true);
@@ -146,6 +160,8 @@ public class QuestionsActivity extends AppCompatActivity {
                                     }
                                     count = 0;
                                     playAnim(txtQuestion, 0, list.get(position).getQuestion());
+                                    Log.e("onAnimationEnd: ", "start Timer");
+                                    startTimer();
                                 }
                             });
 
@@ -168,7 +184,6 @@ public class QuestionsActivity extends AppCompatActivity {
                             finish();
                             Toast.makeText(QuestionsActivity.this, "No Question Available", Toast.LENGTH_SHORT).show();
                         }
-
                         loadingDialog.dismiss();
                     }
 
@@ -181,6 +196,37 @@ public class QuestionsActivity extends AppCompatActivity {
                 });
     }
 
+    private void resetTimer(){
+        timer.cancel();
+        mTimeLeftInMillis = START_TIME_IN_MILLIS;
+        updateCountdownText();
+    }
+
+    private void startTimer(){
+        mEndTime = mTimeLeftInMillis + System.currentTimeMillis();
+        timer = new CountDownTimer(mTimeLeftInMillis, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                mTimeLeftInMillis = millisUntilFinished;
+                updateCountdownText();
+            }
+
+            @Override
+            public void onFinish() {
+                isTimeRunning = false;
+                // Change the Question
+            }
+        }.start();
+
+        isTimeRunning = true;
+    }
+
+    private void updateCountdownText(){
+
+        String timeLeft = String.format(Locale.getDefault(), "%02d", (mTimeLeftInMillis / 1000));
+        countDownText.setText("Time Left: " + timeLeft);
+    }
+
     @Override
     protected void onPause() {
         super.onPause();
@@ -188,6 +234,7 @@ public class QuestionsActivity extends AppCompatActivity {
     }
 
     private void playAnim(final View view, final int value, final String data){
+
         view.animate().alpha(value).scaleX(value).scaleY(value).setDuration(500).setStartDelay(100).setInterpolator(new DecelerateInterpolator()).setListener(new Animator.AnimatorListener() {
             @Override
             public void onAnimationStart(Animator animation) {
@@ -209,6 +256,7 @@ public class QuestionsActivity extends AppCompatActivity {
 
             @Override
             public void onAnimationEnd(Animator animation) {
+
                 if (value == 0){
 
                     try{
@@ -251,7 +299,7 @@ public class QuestionsActivity extends AppCompatActivity {
             selectedOption.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
             score++;
         } else {
-            //incorrent
+            //incorrect answer
             selectedOption.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FF0000")));
 
             Button correctOpt = (Button) optionContainer.findViewWithTag(list.get(position).getCorrentAns());
